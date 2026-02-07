@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: docs-deploy
+  group: demo-deploy
   cancel-in-progress: false
 
 permissions:
