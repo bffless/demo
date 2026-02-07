@@ -37,7 +37,7 @@ jobs:
       - name: Upload docs preview
         uses: bffless/upload-artifact@v1
         with:
-          path: build
+          path: dist
           api-url: ${{ vars.ASSET_HOST_URL }}
           api-key: ${{ secrets.ASSET_HOST_KEY }}
           alias: preview
