@@ -46,6 +46,6 @@ jobs:
           api-url: ${{ vars.ASSET_HOST_URL }}
           api-key: ${{ secrets.ASSET_HOST_KEY }}
           alias: production
-          base-path: /build
+          base-path: /dist
           description: 'Demo production deploy for ${{ github.ref_name }}@${{ github.sha }}'
           summary-title: Demo Production Deploy
