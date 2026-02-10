@@ -1,38 +1,38 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
 interface FeatureFlag {
-  enabled: boolean
-  description: string
-  rollout_percentage: number
+  enabled: boolean;
+  description: string;
+  rollout_percentage: number;
 }
 
 interface FeatureFlags {
-  flags: Record<string, FeatureFlag>
-  version: string
-  last_updated: string
+  flags: Record<string, FeatureFlag>;
+  version: string;
+  last_updated: string;
 }
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [flags, setFlags] = useState<FeatureFlags | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [count, setCount] = useState(0);
+  const [flags, setFlags] = useState<FeatureFlags | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/flags/features.json')
       .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return res.json()
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
       })
       .then((data) => {
-        setFlags(data)
-        setLoading(false)
+        setFlags(data);
+        setLoading(false);
       })
       .catch((err) => {
-        setError(err.message)
-        setLoading(false)
-      })
-  }, [])
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <div className="container">
@@ -45,8 +45,7 @@ function App() {
       <div className="card" style={{ marginTop: '2rem', textAlign: 'left' }}>
         <h2>Feature Flags</h2>
         <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>
-          Fetched via proxy rule: <code>/flags/*</code> →{' '}
-          <code>demo-feature-flags</code>
+          Fetched via proxy rule: <code>/flags/*</code> → <code>demo-feature-flags</code>
         </p>
 
         {loading && <p>Loading flags...</p>}
@@ -60,12 +59,8 @@ function App() {
               <thead>
                 <tr>
                   <th style={{ textAlign: 'left', padding: '0.5rem' }}>Flag</th>
-                  <th style={{ textAlign: 'center', padding: '0.5rem' }}>
-                    Status
-                  </th>
-                  <th style={{ textAlign: 'right', padding: '0.5rem' }}>
-                    Rollout
-                  </th>
+                  <th style={{ textAlign: 'center', padding: '0.5rem' }}>Status</th>
+                  <th style={{ textAlign: 'right', padding: '0.5rem' }}>Rollout</th>
                 </tr>
               </thead>
               <tbody>
@@ -74,9 +69,7 @@ function App() {
                     <td style={{ padding: '0.5rem' }}>
                       <strong>{key}</strong>
                       <br />
-                      <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                        {flag.description}
-                      </span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{flag.description}</span>
                     </td>
                     <td style={{ textAlign: 'center', padding: '0.5rem' }}>
                       <span
@@ -102,7 +95,7 @@ function App() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
