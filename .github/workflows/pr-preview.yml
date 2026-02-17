@@ -41,6 +41,7 @@ jobs:
         continue-on-error: true
         with:
           alias: coverage-production
+          source-path: coverage
           output-path: ./coverage-production
           api-url: ${{ vars.ASSET_HOST_URL }}
           api-key: ${{ secrets.ASSET_HOST_KEY }}
