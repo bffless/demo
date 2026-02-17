@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  build-and-deploy:
+  test-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -36,10 +36,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage baseline
+        uses: bffless/upload-artifact@v1
+        with:
+          path: coverage
+          api-url: ${{ vars.ASSET_HOST_URL }}
+          api-key: ${{ secrets.ASSET_HOST_KEY }}
+          alias: coverage-production
+          description: 'Coverage baseline for main@${{ github.sha }}'
+          summary-title: Coverage Baseline Upload
+
       - name: Build Demo
         run: pnpm build
 
-      - name: Upload docs to production
+      - name: Upload build to production
         uses: bffless/upload-artifact@v1
         with:
           path: dist
