@@ -61,6 +61,7 @@ jobs:
         continue-on-error: true
         with:
           alias: screenshots-production
+          source-path: screenshots
           output-path: ./screenshots-production
           api-url: ${{ vars.ASSET_HOST_URL }}
           api-key: ${{ secrets.ASSET_HOST_KEY }}
@@ -166,10 +167,16 @@ jobs:
                 const newScreenshots = summary.new;
                 const missing = summary.missing;
 
-                if (failed === 0 && missing === 0) {
+                if (failed === 0 && missing === 0 && newScreenshots === 0) {
                   body += `✅ **${passed}/${total}** screenshots passed\n\n`;
+                } else if (failed === 0 && missing === 0 && newScreenshots > 0) {
+                  if (passed > 0) {
+                    body += `✅ **${passed}/${total - newScreenshots}** screenshots passed | ${newScreenshots} new\n\n`;
+                  } else {
+                    body += `🆕 **${newScreenshots}** new screenshots (no baseline to compare)\n\n`;
+                  }
                 } else {
-                  body += `❌ **${passed}/${total}** screenshots passed`;
+                  body += `❌ **${passed}/${total - newScreenshots}** screenshots passed`;
                   if (failed > 0) body += ` | ${failed} failed`;
                   if (missing > 0) body += ` | ${missing} missing`;
                   if (newScreenshots > 0) body += ` | ${newScreenshots} new`;
@@ -194,9 +201,9 @@ jobs:
                 if (failures.length > 0) {
                   body += '\n### Failed Screenshots\n\n';
                   for (const failure of failures) {
-                    const prodUrl = `${assetHostUrl}/screenshots-production/${failure.name}`;
-                    const prUrl = `${assetHostUrl}/screenshots-pr-${prNumber}/${failure.name}`;
-                    const diffUrl = `${assetHostUrl}/screenshot-diffs-pr-${prNumber}/diff-${failure.name}`;
+                    const prodUrl = `${assetHostUrl}/screenshots-production/screenshots/${failure.name}`;
+                    const prUrl = `${assetHostUrl}/screenshots-pr-${prNumber}/screenshots/${failure.name}`;
+                    const diffUrl = `${assetHostUrl}/screenshot-diffs-pr-${prNumber}/screenshot-diffs/diff-${failure.name}`;
 
                     body += `<details>\n`;
                     body += `<summary>❌ ${failure.name} (${failure.diffPercentage.toFixed(3)}% diff)</summary>\n\n`;
