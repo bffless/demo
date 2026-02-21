@@ -77,9 +77,6 @@ jobs:
           script: |
             const fs = require('fs');
 
-            // BFFLESS URL base
-            const bfflessBase = 'https://admin.docs.bffless.app';
-
             // Read PR coverage
             let prCoverage = null;
             try {
