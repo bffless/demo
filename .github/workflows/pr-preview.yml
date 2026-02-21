@@ -55,58 +55,27 @@ jobs:
       - name: Capture PR screenshots
         run: pnpm test:vrt
 
-      - name: Download production screenshots
-        id: download-screenshots
-        uses: bffless/download-artifact@v1
-        continue-on-error: true
-        with:
-          alias: screenshots-production
-          source-path: screenshots
-          output-path: ./screenshots-production
-          api-url: ${{ vars.ASSET_HOST_URL }}
-          api-key: ${{ secrets.ASSET_HOST_KEY }}
-
       - name: Compare screenshots
         id: compare-screenshots
-        if: steps.download-screenshots.outcome == 'success'
+        uses: bffless/compare-screenshots@v1
         continue-on-error: true
-        run: pnpm compare:screenshots --baseline ./screenshots-production --current ./screenshots --diff ./screenshot-diffs --output ./vrt-report.json
-
-      - name: Upload PR screenshots
-        uses: bffless/upload-artifact@v1
-        with:
-          path: screenshots
-          api-url: ${{ vars.ASSET_HOST_URL }}
-          api-key: ${{ secrets.ASSET_HOST_KEY }}
-          alias: screenshots-pr-${{ github.event.pull_request.number }}
-          description: 'Screenshots for PR #${{ github.event.pull_request.number }}'
-          summary-title: PR Screenshots Upload
-
-      - name: Upload screenshot diffs
-        if: steps.compare-screenshots.outcome == 'failure'
-        uses: bffless/upload-artifact@v1
-        with:
-          path: screenshot-diffs
-          api-url: ${{ vars.ASSET_HOST_URL }}
-          api-key: ${{ secrets.ASSET_HOST_KEY }}
-          alias: screenshot-diffs-pr-${{ github.event.pull_request.number }}
-          description: 'Screenshot diffs for PR #${{ github.event.pull_request.number }}'
-          summary-title: Screenshot Diffs Upload
-
-      - name: Compare coverage and VRT, comment on PR
-        uses: actions/github-script@v7
         env:
-          ASSET_HOST_URL: ${{ vars.ASSET_HOST_URL }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          SCREENSHOTS_DOWNLOAD_STATUS: ${{ steps.download-screenshots.outcome }}
-          VRT_COMPARISON_STATUS: ${{ steps.compare-screenshots.outcome }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          path: ./screenshots
+          baseline-alias: production
+          api-url: ${{ vars.ASSET_HOST_URL }}
+          api-key: ${{ secrets.ASSET_HOST_KEY }}
+          alias: preview
+          fail-on-difference: 'false'
+          summary: 'true'
+          comment: 'true'
+
+      - name: Post coverage comment
+        uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const assetHostUrl = process.env.ASSET_HOST_URL;
-            const prNumber = process.env.PR_NUMBER;
-            const screenshotsDownloadStatus = process.env.SCREENSHOTS_DOWNLOAD_STATUS;
-            const vrtComparisonStatus = process.env.VRT_COMPARISON_STATUS;
 
             // Read PR coverage
             let prCoverage = null;
@@ -145,80 +114,7 @@ jobs:
               body += '_Could not read coverage report._\n';
             }
 
-            // Build VRT section
-            body += '\n---\n\n## Visual Regression Report\n\n';
-
-            if (screenshotsDownloadStatus !== 'success') {
-              body += '_No production screenshot baseline found. This PR will establish the baseline once merged._\n';
-            } else {
-              // Read VRT report
-              let vrtReport = null;
-              try {
-                vrtReport = JSON.parse(fs.readFileSync('./vrt-report.json', 'utf8'));
-              } catch (e) {
-                console.log('Could not read VRT report:', e.message);
-              }
-
-              if (vrtReport) {
-                const { summary, results } = vrtReport;
-                const passed = summary.passed;
-                const total = summary.total;
-                const failed = summary.failed;
-                const newScreenshots = summary.new;
-                const missing = summary.missing;
-
-                if (failed === 0 && missing === 0 && newScreenshots === 0) {
-                  body += `✅ **${passed}/${total}** screenshots passed\n\n`;
-                } else if (failed === 0 && missing === 0 && newScreenshots > 0) {
-                  if (passed > 0) {
-                    body += `✅ **${passed}/${total - newScreenshots}** screenshots passed | ${newScreenshots} new\n\n`;
-                  } else {
-                    body += `🆕 **${newScreenshots}** new screenshots (no baseline to compare)\n\n`;
-                  }
-                } else {
-                  body += `❌ **${passed}/${total - newScreenshots}** screenshots passed`;
-                  if (failed > 0) body += ` | ${failed} failed`;
-                  if (missing > 0) body += ` | ${missing} missing`;
-                  if (newScreenshots > 0) body += ` | ${newScreenshots} new`;
-                  body += '\n\n';
-                }
-
-                // Build results table
-                body += '| Screenshot | Status | Diff % |\n';
-                body += '|------------|--------|--------|\n';
-
-                for (const result of results) {
-                  const statusEmoji = result.status === 'pass' ? '✅' :
-                                       result.status === 'fail' ? '❌' :
-                                       result.status === 'new' ? '🆕' : '⚠️';
-                  const diffPct = result.diffPercentage !== undefined ?
-                                  `${result.diffPercentage.toFixed(3)}%` : '-';
-                  body += `| ${result.name} | ${statusEmoji} ${result.status} | ${diffPct} |\n`;
-                }
-
-                // Add collapsible sections for failures with side-by-side comparison
-                const failures = results.filter(r => r.status === 'fail');
-                if (failures.length > 0) {
-                  body += '\n### Failed Screenshots\n\n';
-                  for (const failure of failures) {
-                    const prodUrl = `${assetHostUrl}/screenshots-production/screenshots/${failure.name}`;
-                    const prUrl = `${assetHostUrl}/screenshots-pr-${prNumber}/screenshots/${failure.name}`;
-                    const diffUrl = `${assetHostUrl}/screenshot-diffs-pr-${prNumber}/screenshot-diffs/diff-${failure.name}`;
-
-                    body += `<details>\n`;
-                    body += `<summary>❌ ${failure.name} (${failure.diffPercentage.toFixed(3)}% diff)</summary>\n\n`;
-                    body += `| Production | PR | Diff |\n`;
-                    body += `|------------|-----|------|\n`;
-                    body += `| ![prod](${prodUrl}) | ![pr](${prUrl}) | ![diff](${diffUrl}) |\n\n`;
-                    body += `</details>\n\n`;
-                  }
-                }
-              } else {
-                body += '_Could not read visual regression report._\n';
-              }
-            }
-
-            body += '\n---\n_Generated by [BFFless](https://bffless.app) coverage and VRT comparison_';
+            body += '\n---\n_Generated by [BFFless](https://bffless.app)_';
 
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({

@@ -75,6 +75,6 @@ jobs:
           path: screenshots
           api-url: ${{ vars.ASSET_HOST_URL }}
           api-key: ${{ secrets.ASSET_HOST_KEY }}
-          alias: screenshots-production
+          alias: production
           description: 'Screenshot baseline for main@${{ github.sha }}'
           summary-title: Screenshot Baseline Upload
