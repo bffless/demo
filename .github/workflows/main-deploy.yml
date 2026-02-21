@@ -62,3 +62,19 @@ jobs:
           base-path: /dist
           description: 'Demo production deploy for ${{ github.ref_name }}@${{ github.sha }}'
           summary-title: Demo Production Deploy
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium
+
+      - name: Capture production screenshots
+        run: pnpm test:vrt
+
+      - name: Upload screenshots baseline
+        uses: bffless/upload-artifact@v1
+        with:
+          path: screenshots
+          api-url: ${{ vars.ASSET_HOST_URL }}
+          api-key: ${{ secrets.ASSET_HOST_KEY }}
+          alias: screenshots-production
+          description: 'Screenshot baseline for main@${{ github.sha }}'
+          summary-title: Screenshot Baseline Upload
