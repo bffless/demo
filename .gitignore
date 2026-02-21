@@ -1,3 +1,8 @@
 dist
 node_modules
 coverage
+screenshots
+screenshot-diffs
+vrt-report.json
+playwright-report
+test-results
