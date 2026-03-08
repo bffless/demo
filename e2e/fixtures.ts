@@ -28,6 +28,11 @@ export async function waitForAppReady(page: Page): Promise<void> {
     // Loading might have already finished
   })
 
+  // Wait for the counter loading state to disappear
+  await page.waitForSelector('button:has-text("Loading...")', { state: 'hidden', timeout: 10000 }).catch(() => {
+    // Loading might have already finished
+  })
+
   // Wait for the table to be visible (indicates flags loaded)
   await page.waitForSelector('table', { state: 'visible', timeout: 10000 })
 
@@ -37,6 +42,7 @@ export async function waitForAppReady(page: Page): Promise<void> {
 
 export const test = base.extend<{
   mockFlags: typeof mockFeatureFlags
+  mockCounter: { getCount: () => number }
 }>({
   mockFlags: async ({ page }, use) => {
     // Intercept the feature flags endpoint
@@ -49,6 +55,26 @@ export const test = base.extend<{
     })
 
     await use(mockFeatureFlags)
+  },
+  mockCounter: async ({ page }, use) => {
+    let count = 0
+
+    // Intercept the counter API endpoints
+    await page.route('**/api/count', async (route) => {
+      const method = route.request().method()
+
+      if (method === 'POST') {
+        count++
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ count }),
+      })
+    })
+
+    await use({ getCount: () => count })
   },
 })
 

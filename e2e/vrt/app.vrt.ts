@@ -1,7 +1,7 @@
 import { test, expect, mockFeatureFlags, waitForAppReady } from '../fixtures'
 
 test.describe('Visual Regression Tests', () => {
-  test('default state - flags loaded', async ({ page, mockFlags }) => {
+  test('default state - flags loaded', async ({ page, mockFlags, mockCounter }) => {
     await page.goto('/')
     await waitForAppReady(page)
 
@@ -17,7 +17,16 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('loading state', async ({ page }) => {
-    // Intercept and delay the response
+    // Mock the counter API
+    await page.route('**/api/count', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ count: 0 }),
+      })
+    })
+
+    // Intercept and delay the flags response
     await page.route('**/flags/features.json', async (route) => {
       // Don't fulfill - leave the request pending to capture loading state
       await new Promise((resolve) => setTimeout(resolve, 100))
@@ -40,7 +49,16 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('error state', async ({ page }) => {
-    // Mock a failed response
+    // Mock the counter API
+    await page.route('**/api/count', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ count: 0 }),
+      })
+    })
+
+    // Mock a failed flags response
     await page.route('**/flags/features.json', async (route) => {
       await route.fulfill({
         status: 500,
@@ -60,17 +78,22 @@ test.describe('Visual Regression Tests', () => {
     })
   })
 
-  test('counter interaction state', async ({ page, mockFlags }) => {
+  test('counter interaction state', async ({ page, mockFlags, mockCounter }) => {
     await page.goto('/')
     await waitForAppReady(page)
 
-    // Click the counter button multiple times
+    // Verify counter starts at 0
     const counterButton = page.locator('button:has-text("Count is")')
-    await counterButton.click()
-    await counterButton.click()
-    await counterButton.click()
+    await expect(counterButton).toHaveText('Count is 0')
 
-    // Verify counter state
+    // Click the counter button multiple times
+    await counterButton.click()
+    await expect(counterButton).toHaveText('Count is 1')
+
+    await counterButton.click()
+    await expect(counterButton).toHaveText('Count is 2')
+
+    await counterButton.click()
     await expect(counterButton).toHaveText('Count is 3')
 
     await page.screenshot({
