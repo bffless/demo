@@ -11,6 +11,11 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path.replace(/^\/flags/, ''),
       },
+      '/api': {
+        target: 'https://demo.docs.bffless.app',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
 })
