@@ -13,11 +13,31 @@ interface FeatureFlags {
 }
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState<number | null>(null);
+  const [countLoading, setCountLoading] = useState(true);
+  const [countError, setCountError] = useState<string | null>(null);
   const [flags, setFlags] = useState<FeatureFlags | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch initial count on mount
+  useEffect(() => {
+    fetch('/api/count')
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        setCount(data.count);
+        setCountLoading(false);
+      })
+      .catch((err) => {
+        setCountError(err.message);
+        setCountLoading(false);
+      });
+  }, []);
+
+  // Fetch feature flags on mount
   useEffect(() => {
     fetch('/flags/features.json')
       .then((res) => {
@@ -34,12 +54,31 @@ function App() {
       });
   }, []);
 
+  // Handle increment via API
+  const handleIncrement = async () => {
+    try {
+      const res = await fetch('/api/count', { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setCount(data.count);
+    } catch (err) {
+      setCountError(err instanceof Error ? err.message : 'Update failed');
+    }
+  };
+
   return (
     <div className="container">
       <h1>Demo App</h1>
       <p>A simple React + TypeScript + Vite demo.</p>
       <div className="card">
-        <button onClick={() => setCount((c) => c + 1)}>Count is {count}</button>
+        <button onClick={handleIncrement} disabled={countLoading}>
+          {countLoading ? 'Loading...' : `Count is ${count ?? 0}`}
+        </button>
+        {countError && (
+          <p style={{ color: 'red', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+            Counter error: {countError}
+          </p>
+        )}
       </div>
 
       <div className="card" style={{ marginTop: '2rem', textAlign: 'left' }}>
