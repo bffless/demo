@@ -1,0 +1,5 @@
+# /flags/* — proxy to the demo-feature-flags project so the app can fetch
+# feature flags same-origin (no CORS). stripPrefix (default) drops /flags, so
+# /flags/features.json -> https://demo-feature-flags.bffless.dev/features.json
+description: Proxy feature flags from the demo-feature-flags project
+targetUrl: https://demo-feature-flags.bffless.dev
