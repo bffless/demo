@@ -52,6 +52,14 @@ jobs:
       - name: Build Demo
         run: pnpm build
 
+      - name: Sync proxy rules
+        uses: bffless/deploy-proxy-rules@v1
+        with:
+          path: .bffless/proxy-rules/demo
+          api-url: ${{ vars.ASSET_HOST_URL }}
+          api-key: ${{ secrets.ASSET_HOST_KEY }}
+          project: bffless/demo
+
       - name: Upload build to production
         uses: bffless/upload-artifact@v1
         with:
@@ -60,6 +68,7 @@ jobs:
           api-key: ${{ secrets.ASSET_HOST_KEY }}
           alias: production
           base-path: /dist
+          proxy-rule-set-names: demo
           description: 'Demo production deploy for ${{ github.ref_name }}@${{ github.sha }}'
           summary-title: Demo Production Deploy
 

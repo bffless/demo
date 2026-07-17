@@ -1,0 +1,3 @@
+name: demo
+description: Demo app backend — click counter pipeline (/api/count) and the /flags/* proxy to the demo-feature-flags project.
+environment: production

@@ -1,0 +1,45 @@
+# POST /api/count — increment the counter and return { count: n }.
+# Self-seeding: the first click creates the record, later clicks update it.
+description: Increment the click count
+pipeline:
+  name: Increment Count
+  description: "Increment (or seed) the counter record and return { count: n }"
+  steps:
+    - id: get
+      name: get
+      handler: data_query
+      config:
+        schemaId: $schema:counter
+        pageSize: 1
+
+    - id: calc
+      name: calc
+      handler: function_handler
+      code: ./calc.fn.js
+
+    - id: seed
+      name: seed
+      handler: data_create
+      config:
+        condition: steps.calc.noRecord
+        schemaId: $schema:counter
+        fields:
+          count: steps.calc.next
+
+    - id: bump
+      name: bump
+      handler: data_update
+      config:
+        condition: steps.calc.hasRecord
+        schemaId: $schema:counter
+        recordId: steps.calc.recordId
+        fields:
+          count: steps.calc.next
+
+    - id: respond
+      name: respond
+      handler: response_handler
+      config:
+        body: '{"count": {{steps.calc.next}}}'
+        status: 200
+        contentType: application/json

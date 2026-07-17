@@ -1,0 +1,8 @@
+handler: ./calc.fn.js
+cases:
+  - name: increments an existing record
+    data: { steps: { get: [{ id: "rec-1", count: 4 }] } }
+    expect: { result: { next: 5, recordId: "rec-1", hasRecord: true, noRecord: false } }
+  - name: seeds when no record exists
+    data: { steps: { get: [] } }
+    expect: { result: { next: 1, recordId: "", hasRecord: false, noRecord: true } }

@@ -1,0 +1,26 @@
+# GET /api/count — read half of the click counter. The app expects { count: n }.
+description: Return the current click count
+pipeline:
+  name: Get Count
+  description: "Read the counter record and return { count: n }"
+  steps:
+    - id: get
+      name: get
+      handler: data_query
+      config:
+        schemaId: $schema:counter
+        pageSize: 1
+
+    # First-ever request has no record yet — shape defaults that case to 0.
+    - id: shape
+      name: shape
+      handler: function_handler
+      code: ./shape.fn.js
+
+    - id: respond
+      name: respond
+      handler: response_handler
+      config:
+        body: '{"count": {{steps.shape.count}}}'
+        status: 200
+        contentType: application/json

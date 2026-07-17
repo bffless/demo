@@ -1,0 +1,11 @@
+handler: ./shape.fn.js
+cases:
+  - name: returns the stored count
+    data: { steps: { get: [{ id: "abc", count: 7 }] } }
+    expect: { result: { count: 7 } }
+  - name: defaults to 0 when no record exists
+    data: { steps: { get: [] } }
+    expect: { result: { count: 0 } }
+  - name: coerces a string count
+    data: { steps: { get: [{ id: "abc", count: "12" }] } }
+    expect: { result: { count: 12 } }
